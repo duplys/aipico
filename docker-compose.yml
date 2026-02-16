@@ -1,23 +1,13 @@
 services:
-  db:
-    image: postgres:17-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: aipico
-      POSTGRES_USER: aipico
-      POSTGRES_PASSWORD: aipico
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
   app:
     build:
       context: .
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://aipico:aipico@db:5432/aipico
+      SQLITE_PATH: /app/data/aipico.sqlite
       NODE_ENV: production
-    depends_on:
-      - db
+    volumes:
+      - sqlite_data:/app/data
 
   caddy:
     image: caddy:2
@@ -33,6 +23,6 @@ services:
       - app
 
 volumes:
-  postgres_data:
+  sqlite_data:
   caddy_data:
   caddy_config:

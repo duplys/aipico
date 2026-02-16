@@ -5,7 +5,7 @@ Basic Next.js web application for posting German Bundesliga matchday predictions
 ## Stack
 
 - Next.js (App Router, TypeScript)
-- PostgreSQL
+- SQLite (local file)
 - Docker Compose
 - Caddy
 
@@ -52,17 +52,23 @@ curl -X POST http://localhost:3000/api/predictions \
 
 ## Local development
 
-1. Start PostgreSQL (for example via Docker):
-
-```bash
-docker run --name aipico-db -e POSTGRES_DB=aipico -e POSTGRES_USER=aipico -e POSTGRES_PASSWORD=aipico -p 5432:5432 -d postgres:17-alpine
-```
-
-2. Install dependencies and run app:
+1. Install dependencies:
 
 ```bash
 npm install
-DATABASE_URL=postgres://aipico:aipico@localhost:5432/aipico npm run dev
+```
+
+2. Run app:
+
+```bash
+npm run dev
+```
+
+By default, the app stores data in `./data/aipico.sqlite`.
+You can override this location with `SQLITE_PATH`, for example:
+
+```bash
+SQLITE_PATH=./tmp/aipico.sqlite npm run dev
 ```
 
 ## Deploy with Docker Compose + Caddy

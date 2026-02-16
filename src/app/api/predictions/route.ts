@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { ensurePredictionsTable, getPool } from "@/lib/db";
+import { ensurePredictionsTable, getDb } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -28,6 +28,18 @@ const createPredictionSchema = z
     },
   );
 
+type PredictionRow = {
+  id: number;
+  season: string;
+  matchday: number;
+  home_team: string;
+  away_team: string;
+  predicted_outcome: "HOME_WIN" | "DRAW" | "AWAY_WIN";
+  predicted_home_goals: number | null;
+  predicted_away_goals: number | null;
+  created_at: string;
+};
+
 export async function POST(request: Request) {
   let body: unknown;
 
@@ -51,8 +63,11 @@ export async function POST(request: Request) {
 
   await ensurePredictionsTable();
 
-  const result = await getPool().query(
-    `
+  const db = getDb();
+
+  const insertResult = db
+    .prepare(
+      `
       INSERT INTO predictions (
         season,
         matchday,
@@ -62,10 +77,10 @@ export async function POST(request: Request) {
         predicted_home_goals,
         predicted_away_goals
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, season, matchday, home_team, away_team, predicted_outcome, predicted_home_goals, predicted_away_goals, created_at;
+      VALUES (?, ?, ?, ?, ?, ?, ?);
     `,
-    [
+    )
+    .run(
       parsed.data.season,
       parsed.data.matchday,
       parsed.data.homeTeam,
@@ -73,10 +88,35 @@ export async function POST(request: Request) {
       parsed.data.predictedOutcome,
       parsed.data.predictedHomeGoals ?? null,
       parsed.data.predictedAwayGoals ?? null,
-    ],
-  );
+    );
 
-  const prediction = result.rows[0];
+  const prediction = db
+    .prepare(
+      `
+      SELECT
+        id,
+        season,
+        matchday,
+        home_team,
+        away_team,
+        predicted_outcome,
+        predicted_home_goals,
+        predicted_away_goals,
+        created_at
+      FROM predictions
+      WHERE id = ?;
+    `,
+    )
+    .get(insertResult.lastInsertRowid as number) as PredictionRow | undefined;
+
+  if (!prediction) {
+    return NextResponse.json(
+      {
+        error: "Failed to create prediction",
+      },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json(
     {
