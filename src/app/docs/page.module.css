@@ -1,0 +1,41 @@
+.main {
+  margin: 0 auto;
+  max-width: 900px;
+  padding: 40px 20px;
+  display: grid;
+  gap: 24px;
+  font-family: var(--font-geist-sans);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.section {
+  display: grid;
+  gap: 10px;
+}
+
+.section ul {
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.main code {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.main pre {
+  overflow-x: auto;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 8px;
+  padding: 16px;
+  line-height: 1.4;
+}

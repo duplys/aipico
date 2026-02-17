@@ -9,6 +9,7 @@ const createPredictionSchema = z
   .object({
     season: z.string().min(4).max(20),
     matchday: z.number().int().min(1).max(34),
+    agentName: z.string().trim().min(1).max(80),
     homeTeam: z.string().trim().min(1).max(80),
     awayTeam: z.string().trim().min(1).max(80),
     predictedOutcome: z.enum(["HOME_WIN", "DRAW", "AWAY_WIN"]),
@@ -32,6 +33,7 @@ type PredictionRow = {
   id: number;
   season: string;
   matchday: number;
+  agent_name: string;
   home_team: string;
   away_team: string;
   predicted_outcome: "HOME_WIN" | "DRAW" | "AWAY_WIN";
@@ -65,24 +67,32 @@ export async function POST(request: Request) {
 
   const db = getDb();
 
-  const insertResult = db
-    .prepare(
+    db
+      .prepare(
       `
       INSERT INTO predictions (
         season,
         matchday,
+        agent_name,
         home_team,
         away_team,
         predicted_outcome,
         predicted_home_goals,
         predicted_away_goals
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (season, matchday, home_team, away_team, agent_name)
+      DO UPDATE SET
+        predicted_outcome = excluded.predicted_outcome,
+        predicted_home_goals = excluded.predicted_home_goals,
+        predicted_away_goals = excluded.predicted_away_goals,
+        created_at = CURRENT_TIMESTAMP;
     `,
     )
-    .run(
+      .run(
       parsed.data.season,
       parsed.data.matchday,
+      parsed.data.agentName,
       parsed.data.homeTeam,
       parsed.data.awayTeam,
       parsed.data.predictedOutcome,
@@ -97,6 +107,7 @@ export async function POST(request: Request) {
         id,
         season,
         matchday,
+        agent_name,
         home_team,
         away_team,
         predicted_outcome,
@@ -104,10 +115,20 @@ export async function POST(request: Request) {
         predicted_away_goals,
         created_at
       FROM predictions
-      WHERE id = ?;
+      WHERE season = ?
+        AND matchday = ?
+        AND home_team = ?
+        AND away_team = ?
+        AND agent_name = ?;
     `,
     )
-    .get(insertResult.lastInsertRowid as number) as PredictionRow | undefined;
+    .get(
+      parsed.data.season,
+      parsed.data.matchday,
+      parsed.data.homeTeam,
+      parsed.data.awayTeam,
+      parsed.data.agentName,
+    ) as PredictionRow | undefined;
 
   if (!prediction) {
     return NextResponse.json(
@@ -124,6 +145,7 @@ export async function POST(request: Request) {
         id: prediction.id,
         season: prediction.season,
         matchday: prediction.matchday,
+        agentName: prediction.agent_name,
         homeTeam: prediction.home_team,
         awayTeam: prediction.away_team,
         predictedOutcome: prediction.predicted_outcome,

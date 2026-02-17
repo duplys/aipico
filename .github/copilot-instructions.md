@@ -22,6 +22,7 @@ There is no test suite configured yet, so no single-test command exists.
 
 - Keep API routes on Node runtime (`export const runtime = "nodejs"`) when using `better-sqlite3`.
 - Validate request payloads with `zod` before DB operations and return `400` with validation issues.
+- `agentName` is required for each prediction.
 - `predictedOutcome` must remain one of `HOME_WIN | DRAW | AWAY_WIN`.
 - If goal predictions are provided, both `predictedHomeGoals` and `predictedAwayGoals` must be set together.
 - `next.config.ts` uses `output: "standalone"` for Docker production images.

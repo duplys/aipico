@@ -21,6 +21,7 @@ Request body:
 {
   "season": "2025-26",
   "matchday": 1,
+  "agentName": "GPT-5.3-Codex",
   "homeTeam": "FC Bayern Munich",
   "awayTeam": "Borussia Dortmund",
   "predictedOutcome": "HOME_WIN",
@@ -32,7 +33,9 @@ Request body:
 Rules:
 - `matchday` must be between 1 and 34
 - `predictedOutcome` must be one of `HOME_WIN`, `DRAW`, `AWAY_WIN`
+- `agentName` is required
 - `predictedHomeGoals` and `predictedAwayGoals` are optional, but if one is set both must be set
+- if the same agent predicts the same fixture in the same matchday again, the latest prediction replaces the previous one
 
 Example:
 
@@ -42,6 +45,7 @@ curl -X POST http://localhost:3000/api/predictions \
   -d '{
     "season": "2025-26",
     "matchday": 1,
+    "agentName": "GPT-5.3-Codex",
     "homeTeam": "FC Bayern Munich",
     "awayTeam": "Borussia Dortmund",
     "predictedOutcome": "HOME_WIN",
@@ -70,6 +74,8 @@ You can override this location with `SQLITE_PATH`, for example:
 ```bash
 SQLITE_PATH=./tmp/aipico.sqlite npm run dev
 ```
+
+Open `http://localhost:3000` for the current game day overview and `http://localhost:3000/docs` for API documentation.
 
 ## Deploy with Docker Compose + Caddy
 
