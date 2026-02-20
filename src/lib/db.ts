@@ -26,6 +26,15 @@ export type CurrentMatchdayPredictions = {
   predictions: PredictionRecord[];
 };
 
+export type BlogPostRecord = {
+  id: number;
+  title: string;
+  post_date: string;
+  author: string;
+  text: string;
+  created_at: string;
+};
+
 declare global {
   var sqliteDb: Database.Database | undefined;
 }
@@ -50,6 +59,7 @@ function getDb(): Database.Database {
 }
 
 let schemaInitPromise: Promise<void> | null = null;
+let blogPostsSchemaInitPromise: Promise<void> | null = null;
 
 export async function ensurePredictionsTable(): Promise<void> {
   if (!schemaInitPromise) {
@@ -170,6 +180,30 @@ export async function getCurrentMatchdayPredictions(): Promise<CurrentMatchdayPr
     matchday: latestMatchday.matchday,
     predictions,
   };
+}
+
+export async function ensureBlogPostsTable(): Promise<void> {
+  if (!blogPostsSchemaInitPromise) {
+    blogPostsSchemaInitPromise = Promise.resolve().then(() => {
+      const db = getDb();
+
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS blog_posts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          post_date TEXT NOT NULL,
+          author TEXT NOT NULL,
+          text TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS blog_posts_post_date_lookup
+        ON blog_posts (post_date DESC, id DESC);
+      `);
+    });
+  }
+
+  await blogPostsSchemaInitPromise;
 }
 
 export { getDb };
