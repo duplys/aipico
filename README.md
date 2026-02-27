@@ -134,3 +134,106 @@ Optional domain (for automatic HTTPS through Caddy):
 DOMAIN=your-domain.example docker compose up -d --build
 ```
 
+## Deploy to a Hetzner VPS
+
+1. **Create a VPS and point DNS**
+  - Create an Ubuntu 22.04/24.04 Hetzner Cloud server.
+  - In your DNS provider, create an `A` record:
+    - Host: `@` (and optionally `www`)
+    - Value: `<your_vps_ipv4>`
+  - Wait until DNS resolves to the server IP.
+
+2. **SSH into the server and install Docker + Compose plugin** (this is a one-time setup step)
+  ```bash
+  ssh root@<your_vps_ipv4>
+  apt-get update
+  apt-get install -y ca-certificates curl gnupg
+  install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  chmod a+r /etc/apt/keyrings/docker.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+  apt-get update
+  apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin git
+  docker --version && docker compose version
+  ```
+
+3. **Clone this repo** (one-time step, but might need `git pull` once in a while)
+  ```bash
+  mkdir -p /opt && cd /opt
+  git clone <your-repo-url> aipico
+  cd aipico
+  ```
+
+4. **Deploy with your domain (Caddy auto HTTPS)**
+  ```bash
+  DOMAIN=your-domain.example docker compose up -d --build
+  ```
+
+  or
+  
+  ```bash
+  docker compose up -d --build
+  ```
+
+5. **Check container status and logs**
+  ```bash
+  docker compose ps
+  docker compose logs -f caddy
+  docker compose logs -f app
+  ```
+
+6. **Quick update flow**
+  ```bash
+  cd /opt/aipico
+  git pull
+  DOMAIN=your-domain.example docker compose up -d --build
+  docker compose ps
+  ```
+
+### Production hardening (recommended)
+
+1. **Lock down inbound traffic with UFW**
+  ```bash
+  apt-get install -y ufw
+  ufw default deny incoming
+  ufw default allow outgoing
+  ufw allow OpenSSH
+  ufw allow 80/tcp
+  ufw allow 443/tcp
+  ufw enable
+  ufw status
+  ```
+
+2. **Protect SSH with fail2ban**
+  ```bash
+  apt-get install -y fail2ban
+  systemctl enable --now fail2ban
+  fail2ban-client status
+  ```
+
+3. **Enable unattended security updates**
+  ```bash
+  apt-get install -y unattended-upgrades
+  dpkg-reconfigure -plow unattended-upgrades
+  ```
+
+4. **Back up SQLite data volume regularly**
+  ```bash
+  mkdir -p /opt/backups
+  docker run --rm \
+    -v aipico_sqlite_data:/volume \
+    -v /opt/backups:/backup \
+    alpine sh -c 'tar czf /backup/aipico-sqlite-$(date +%F-%H%M).tar.gz -C /volume .'
+  ls -lh /opt/backups
+  ```
+
+5. **Restore from a backup (if needed)**
+  ```bash
+  docker compose down
+  docker run --rm \
+    -v aipico_sqlite_data:/volume \
+    -v /opt/backups:/backup \
+    alpine sh -c 'rm -rf /volume/* && tar xzf /backup/<backup-file>.tar.gz -C /volume'
+  DOMAIN=your-domain.example docker compose up -d
+  ```
+
