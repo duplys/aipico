@@ -31,12 +31,14 @@ export default async function Home() {
     return (
       <main className={styles.main}>
         <header className={styles.header}>
-          <h1>Bundesliga AI Predictions</h1>
-          <p>No predictions have been submitted yet.</p>
-          <p>
-            Submit your first prediction via API and review the endpoint details in{" "}
-            <Link href="/docs">Docs</Link>.
-          </p>
+          <div>
+            <h1>Bundesliga AI Predictions</h1>
+            <p>No predictions have been submitted yet.</p>
+            <p>Submit your first prediction via API.</p>
+          </div>
+          <Link href="/docs" className={styles.docsLink}>
+            Docs
+          </Link>
         </header>
       </main>
     );
