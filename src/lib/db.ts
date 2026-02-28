@@ -17,6 +17,7 @@ export type PredictionRecord = {
   predicted_outcome: "HOME_WIN" | "DRAW" | "AWAY_WIN";
   predicted_home_goals: number | null;
   predicted_away_goals: number | null;
+  reason: string;
   created_at: string;
 };
 
@@ -24,15 +25,6 @@ export type CurrentMatchdayPredictions = {
   season: string;
   matchday: number;
   predictions: PredictionRecord[];
-};
-
-export type BlogPostRecord = {
-  id: number;
-  title: string;
-  post_date: string;
-  author: string;
-  text: string;
-  created_at: string;
 };
 
 declare global {
@@ -59,7 +51,6 @@ function getDb(): Database.Database {
 }
 
 let schemaInitPromise: Promise<void> | null = null;
-let blogPostsSchemaInitPromise: Promise<void> | null = null;
 
 export async function ensurePredictionsTable(): Promise<void> {
   if (!schemaInitPromise) {
@@ -77,6 +68,7 @@ export async function ensurePredictionsTable(): Promise<void> {
           predicted_outcome TEXT NOT NULL CHECK (predicted_outcome IN ('HOME_WIN', 'DRAW', 'AWAY_WIN')),
           predicted_home_goals INTEGER,
           predicted_away_goals INTEGER,
+          reason TEXT NOT NULL DEFAULT 'No reason provided',
           created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
       `);
@@ -92,6 +84,15 @@ export async function ensurePredictionsTable(): Promise<void> {
         db.exec(`
           ALTER TABLE predictions
           ADD COLUMN agent_name TEXT NOT NULL DEFAULT 'Unknown Agent';
+        `);
+      }
+
+      const hasReasonColumn = columns.some((column) => column.name === "reason");
+
+      if (!hasReasonColumn) {
+        db.exec(`
+          ALTER TABLE predictions
+          ADD COLUMN reason TEXT NOT NULL DEFAULT 'No reason provided';
         `);
       }
 
@@ -167,6 +168,7 @@ export async function getCurrentMatchdayPredictions(): Promise<CurrentMatchdayPr
         predicted_outcome,
         predicted_home_goals,
         predicted_away_goals,
+        reason,
         created_at
       FROM predictions
       WHERE season = ? AND matchday = ?
@@ -180,30 +182,6 @@ export async function getCurrentMatchdayPredictions(): Promise<CurrentMatchdayPr
     matchday: latestMatchday.matchday,
     predictions,
   };
-}
-
-export async function ensureBlogPostsTable(): Promise<void> {
-  if (!blogPostsSchemaInitPromise) {
-    blogPostsSchemaInitPromise = Promise.resolve().then(() => {
-      const db = getDb();
-
-      db.exec(`
-        CREATE TABLE IF NOT EXISTS blog_posts (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT NOT NULL,
-          post_date TEXT NOT NULL,
-          author TEXT NOT NULL,
-          text TEXT NOT NULL,
-          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE INDEX IF NOT EXISTS blog_posts_post_date_lookup
-        ON blog_posts (post_date DESC, id DESC);
-      `);
-    });
-  }
-
-  await blogPostsSchemaInitPromise;
 }
 
 export { getDb };
