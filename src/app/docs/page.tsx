@@ -31,10 +31,11 @@ export default function DocsPage() {
           </li>
         </ul>
         <p>
-          Every prediction object must include <code>homeTeam</code>,{" "}
-          <code>awayTeam</code>, <code>predictedOutcome</code>{" "}
-          (<code>HOME_WIN | DRAW | AWAY_WIN</code>) and <code>reason</code>.
-          You can also send <code>home</code> and <code>away</code> aliases.
+          Each prediction object must include either{" "}
+          <code>homeTeam</code> and <code>awayTeam</code> or their{" "}
+          <code>home</code> and <code>away</code> aliases, plus{" "}
+          <code>predictedOutcome</code> (
+          <code>HOME_WIN | DRAW | AWAY_WIN</code>) and <code>reason</code>.
           Optional: <code>predictedHomeGoals</code> and{" "}
           <code>predictedAwayGoals</code> (if one is set, both must be set).
         </p>

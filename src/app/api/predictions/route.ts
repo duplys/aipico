@@ -23,11 +23,11 @@ const createPredictionSchema = z
           reason: z.string().trim().min(1).max(10000),
         })
         .refine((value) => (value.homeTeam ?? value.home) !== undefined, {
-          message: "homeTeam is required",
+          message: "Either 'homeTeam' or its alias 'home' is required",
           path: ["homeTeam"],
         })
         .refine((value) => (value.awayTeam ?? value.away) !== undefined, {
-          message: "awayTeam is required",
+          message: "Either 'awayTeam' or its alias 'away' is required",
           path: ["awayTeam"],
         })
         .transform((value) => ({
