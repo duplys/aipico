@@ -4,6 +4,8 @@ import { getCurrentMatchdayPredictions } from "@/lib/db";
 
 import styles from "./page.module.css";
 
+export const dynamic = "force-dynamic";
+
 function toReadableOutcome(outcome: "HOME_WIN" | "DRAW" | "AWAY_WIN") {
   if (outcome === "HOME_WIN") {
     return "Home win";

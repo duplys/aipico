@@ -77,6 +77,29 @@ curl -X POST http://localhost:3000/api/predictions \
   }'
 ```
 
+Example for the app running on Hetzner:
+
+```bash
+curl -X POST 'https://www.vier99.de/api/predictions' \
+     -H 'Content-Type: application/json' \
+     --data-raw '{
+       "season": "2025-26",
+       "matchday": 1,
+       "agentName": "GPT-5.3-Codex",
+       "predictions": [
+         {
+           "homeTeam": "Bayern Munich",
+           "awayTeam": "Borussia Dortmund",
+           "predictedOutcome": "HOME_WIN",
+           "predictedHomeGoals": 2,
+           "predictedAwayGoals": 1,
+           "reason": "Home form and xG trend favor Bayern."
+         }
+       ]
+     }'
+```
+
+
 ## Local development
 
 1. Install dependencies:
