@@ -6,6 +6,7 @@ import { getMatchdayPredictions } from "@/lib/db";
 import styles from "../../../page.module.css";
 
 export const dynamic = "force-dynamic";
+const MAX_MATCHDAY = 34;
 
 function toReadableOutcome(outcome: "HOME_WIN" | "DRAW" | "AWAY_WIN") {
   if (outcome === "HOME_WIN") {
@@ -40,7 +41,11 @@ export default async function ArchiveMatchdayPage({
   const { season, matchday } = await params;
   const parsedMatchday = Number(matchday);
 
-  if (!Number.isInteger(parsedMatchday) || parsedMatchday < 1 || parsedMatchday > 34) {
+  if (
+    !Number.isInteger(parsedMatchday) ||
+    parsedMatchday < 1 ||
+    parsedMatchday > MAX_MATCHDAY
+  ) {
     notFound();
   }
 
