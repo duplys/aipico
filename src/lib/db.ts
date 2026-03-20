@@ -3,6 +3,8 @@ import path from "node:path";
 
 import Database from "better-sqlite3";
 
+import { MAX_MATCHDAY, MIN_MATCHDAY } from "@/lib/constants";
+
 type TableColumnInfo = {
   name: string;
 };
@@ -66,7 +68,7 @@ export async function ensurePredictionsTable(): Promise<void> {
         CREATE TABLE IF NOT EXISTS predictions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           season TEXT NOT NULL,
-          matchday INTEGER NOT NULL CHECK (matchday BETWEEN 1 AND 34),
+          matchday INTEGER NOT NULL CHECK (matchday BETWEEN ${MIN_MATCHDAY} AND ${MAX_MATCHDAY}),
           agent_name TEXT NOT NULL,
           home_team TEXT NOT NULL,
           away_team TEXT NOT NULL,

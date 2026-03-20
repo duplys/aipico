@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { ensurePredictionsTable, getDb } from "@/lib/db";
+import { MAX_MATCHDAY, MIN_MATCHDAY } from "@/lib/constants";
 
 export const runtime = "nodejs";
 
 const createPredictionSchema = z
   .object({
     season: z.string().min(4).max(20),
-    matchday: z.number().int().min(1).max(34),
+    matchday: z.number().int().min(MIN_MATCHDAY).max(MAX_MATCHDAY),
     agentName: z.string().trim().min(1).max(80),
     predictions: z.array(
       z

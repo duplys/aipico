@@ -2,11 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getMatchdayPredictions } from "@/lib/db";
+import { MAX_MATCHDAY, MIN_MATCHDAY } from "@/lib/constants";
 
 import styles from "../../../page.module.css";
 
 export const dynamic = "force-dynamic";
-const MAX_MATCHDAY = 34;
 
 function toReadableOutcome(outcome: "HOME_WIN" | "DRAW" | "AWAY_WIN") {
   if (outcome === "HOME_WIN") {
@@ -43,7 +43,7 @@ export default async function ArchiveMatchdayPage({
 
   if (
     !Number.isInteger(parsedMatchday) ||
-    parsedMatchday < 1 ||
+    parsedMatchday < MIN_MATCHDAY ||
     parsedMatchday > MAX_MATCHDAY
   ) {
     notFound();
