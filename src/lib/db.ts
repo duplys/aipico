@@ -27,6 +27,11 @@ export type CurrentMatchdayPredictions = {
   predictions: PredictionRecord[];
 };
 
+export type MatchdayReference = {
+  season: string;
+  matchday: number;
+};
+
 declare global {
   var sqliteDb: Database.Database | undefined;
 }
@@ -124,36 +129,31 @@ export async function getCurrentMatchdayPredictions(): Promise<CurrentMatchdayPr
 
   const db = getDb();
 
-  const latestSeason = db
+  const latestMatchdayRef = db
     .prepare(
       `
-      SELECT season
+      SELECT season, matchday
       FROM predictions
       ORDER BY created_at DESC, id DESC
       LIMIT 1;
     `,
     )
-    .get() as { season: string } | undefined;
+    .get() as MatchdayReference | undefined;
 
-  if (!latestSeason) {
+  if (!latestMatchdayRef) {
     return null;
   }
 
-  const latestMatchday = db
-    .prepare(
-      `
-      SELECT matchday
-      FROM predictions
-      WHERE season = ?
-      ORDER BY matchday DESC
-      LIMIT 1;
-    `,
-    )
-    .get(latestSeason.season) as { matchday: number } | undefined;
+  return getMatchdayPredictions(latestMatchdayRef.season, latestMatchdayRef.matchday);
+}
 
-  if (!latestMatchday) {
-    return null;
-  }
+export async function getMatchdayPredictions(
+  season: string,
+  matchday: number,
+): Promise<CurrentMatchdayPredictions | null> {
+  await ensurePredictionsTable();
+
+  const db = getDb();
 
   const predictions = db
     .prepare(
@@ -175,13 +175,34 @@ export async function getCurrentMatchdayPredictions(): Promise<CurrentMatchdayPr
       ORDER BY home_team ASC, away_team ASC, agent_name ASC;
     `,
     )
-    .all(latestSeason.season, latestMatchday.matchday) as PredictionRecord[];
+    .all(season, matchday) as PredictionRecord[];
+
+  if (predictions.length === 0) {
+    return null;
+  }
 
   return {
-    season: latestSeason.season,
-    matchday: latestMatchday.matchday,
+    season,
+    matchday,
     predictions,
   };
+}
+
+export async function listAvailableMatchdays(): Promise<MatchdayReference[]> {
+  await ensurePredictionsTable();
+
+  const db = getDb();
+
+  return db
+    .prepare(
+      `
+      SELECT season, matchday
+      FROM predictions
+      GROUP BY season, matchday
+      ORDER BY season DESC, matchday DESC;
+    `,
+    )
+    .all() as MatchdayReference[];
 }
 
 export { getDb };
