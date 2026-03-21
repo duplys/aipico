@@ -63,7 +63,7 @@ const BUNDESLIGA_2025_26_MATCHDAY_DATES: MatchdayDateRange[] = [
   { matchday: 20, startDate: "2026-02-06", endDate: "2026-02-08" },
   { matchday: 21, startDate: "2026-02-13", endDate: "2026-02-15" },
   { matchday: 22, startDate: "2026-02-20", endDate: "2026-02-22" },
-  { matchday: 23, startDate: "2026-02-20", endDate: "2026-02-22" },
+  { matchday: 23, startDate: "2026-02-24", endDate: "2026-02-26" },
   { matchday: 24, startDate: "2026-02-27", endDate: "2026-03-01" },
   { matchday: 25, startDate: "2026-03-06", endDate: "2026-03-08" },
   { matchday: 26, startDate: "2026-03-13", endDate: "2026-03-15" },
