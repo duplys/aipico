@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { getCurrentMatchdayPredictions } from "@/lib/db";
+import { getMatchdayPredictions } from "@/lib/db";
+import { MAX_MATCHDAY, MIN_MATCHDAY } from "@/lib/constants";
 
-import styles from "./page.module.css";
+import styles from "../../../page.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -26,29 +28,31 @@ function toScore(homeGoals: number | null, awayGoals: number | null) {
   return `${homeGoals}:${awayGoals}`;
 }
 
-export default async function Home() {
-  const currentMatchday = await getCurrentMatchdayPredictions();
+type ArchiveMatchdayPageProps = {
+  params: Promise<{
+    season: string;
+    matchday: string;
+  }>;
+};
 
-  if (!currentMatchday) {
-    return (
-      <main className={styles.main}>
-        <header className={styles.header}>
-          <div>
-            <h1>Bundesliga AI Predictions</h1>
-            <p>No predictions have been submitted yet.</p>
-            <p>Submit your first prediction via API.</p>
-          </div>
-          <nav className={styles.headerLinks}>
-            <Link href="/archive" className={styles.docsLink}>
-              Archive
-            </Link>
-            <Link href="/docs" className={styles.docsLink}>
-              Docs
-            </Link>
-          </nav>
-        </header>
-      </main>
-    );
+export default async function ArchiveMatchdayPage({
+  params,
+}: ArchiveMatchdayPageProps) {
+  const { season, matchday } = await params;
+  const parsedMatchday = Number(matchday);
+
+  if (
+    !Number.isInteger(parsedMatchday) ||
+    parsedMatchday < MIN_MATCHDAY ||
+    parsedMatchday > MAX_MATCHDAY
+  ) {
+    notFound();
+  }
+
+  const matchdayPredictions = await getMatchdayPredictions(season, parsedMatchday);
+
+  if (!matchdayPredictions) {
+    notFound();
   }
 
   const fixturesMap = new Map<
@@ -56,12 +60,12 @@ export default async function Home() {
     {
       homeTeam: string;
       awayTeam: string;
-      predictions: typeof currentMatchday.predictions;
+      predictions: typeof matchdayPredictions.predictions;
     }
   >();
   const agents = new Set<string>();
 
-  for (const prediction of currentMatchday.predictions) {
+  for (const prediction of matchdayPredictions.predictions) {
     const fixtureKey = `${prediction.home_team}__${prediction.away_team}`;
     agents.add(prediction.agent_name);
 
@@ -84,10 +88,13 @@ export default async function Home() {
         <div>
           <h1>Bundesliga AI Predictions</h1>
           <p>
-            Season {currentMatchday.season} · Matchday {currentMatchday.matchday}
+            Season {matchdayPredictions.season} · Matchday {matchdayPredictions.matchday}
           </p>
         </div>
         <nav className={styles.headerLinks}>
+          <Link href="/" className={styles.docsLink}>
+            Overview
+          </Link>
           <Link href="/archive" className={styles.docsLink}>
             Archive
           </Link>
@@ -107,7 +114,7 @@ export default async function Home() {
           <p>Agents</p>
         </article>
         <article className={styles.summaryCard}>
-          <h2>{currentMatchday.predictions.length}</h2>
+          <h2>{matchdayPredictions.predictions.length}</h2>
           <p>Total predictions</p>
         </article>
       </section>
