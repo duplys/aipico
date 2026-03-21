@@ -34,6 +34,74 @@ export type MatchdayReference = {
   matchday: number;
 };
 
+type MatchdayDateRange = {
+  matchday: number;
+  startDate: string;
+  endDate: string;
+};
+
+const BUNDESLIGA_2025_26_MATCHDAY_DATES: MatchdayDateRange[] = [
+  { matchday: 1, startDate: "2025-08-22", endDate: "2025-08-24" },
+  { matchday: 2, startDate: "2025-08-29", endDate: "2025-08-31" },
+  { matchday: 3, startDate: "2025-09-12", endDate: "2025-09-14" },
+  { matchday: 4, startDate: "2025-09-19", endDate: "2025-09-21" },
+  { matchday: 5, startDate: "2025-09-26", endDate: "2025-09-28" },
+  { matchday: 6, startDate: "2025-10-03", endDate: "2025-10-05" },
+  { matchday: 7, startDate: "2025-10-17", endDate: "2025-10-19" },
+  { matchday: 8, startDate: "2025-10-24", endDate: "2025-10-26" },
+  { matchday: 9, startDate: "2025-10-31", endDate: "2025-11-02" },
+  { matchday: 10, startDate: "2025-11-07", endDate: "2025-11-09" },
+  { matchday: 11, startDate: "2025-11-21", endDate: "2025-11-23" },
+  { matchday: 12, startDate: "2025-11-28", endDate: "2025-11-30" },
+  { matchday: 13, startDate: "2025-12-05", endDate: "2025-12-07" },
+  { matchday: 14, startDate: "2025-12-12", endDate: "2025-12-14" },
+  { matchday: 15, startDate: "2025-12-19", endDate: "2025-12-21" },
+  { matchday: 16, startDate: "2026-01-09", endDate: "2026-01-11" },
+  { matchday: 17, startDate: "2026-01-16", endDate: "2026-01-18" },
+  { matchday: 18, startDate: "2026-01-23", endDate: "2026-01-25" },
+  { matchday: 19, startDate: "2026-01-30", endDate: "2026-02-01" },
+  { matchday: 20, startDate: "2026-02-06", endDate: "2026-02-08" },
+  { matchday: 21, startDate: "2026-02-13", endDate: "2026-02-15" },
+  { matchday: 22, startDate: "2026-02-20", endDate: "2026-02-22" },
+  { matchday: 23, startDate: "2026-02-20", endDate: "2026-02-22" },
+  { matchday: 24, startDate: "2026-02-27", endDate: "2026-03-01" },
+  { matchday: 25, startDate: "2026-03-06", endDate: "2026-03-08" },
+  { matchday: 26, startDate: "2026-03-13", endDate: "2026-03-15" },
+  { matchday: 27, startDate: "2026-03-20", endDate: "2026-03-22" },
+  { matchday: 28, startDate: "2026-04-03", endDate: "2026-04-05" },
+  { matchday: 29, startDate: "2026-04-10", endDate: "2026-04-12" },
+  { matchday: 30, startDate: "2026-04-17", endDate: "2026-04-19" },
+  { matchday: 31, startDate: "2026-04-24", endDate: "2026-04-26" },
+  { matchday: 32, startDate: "2026-05-01", endDate: "2026-05-03" },
+  { matchday: 33, startDate: "2026-05-08", endDate: "2026-05-10" },
+  { matchday: 34, startDate: "2026-05-15", endDate: "2026-05-17" },
+];
+
+function getBerlinDateString(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+function getHardcodedCurrentMatchdayReference(date: Date): MatchdayReference | null {
+  const berlinDate = getBerlinDateString(date);
+  const current = BUNDESLIGA_2025_26_MATCHDAY_DATES.find(
+    (entry) => berlinDate >= entry.startDate && berlinDate <= entry.endDate,
+  );
+
+  if (!current) {
+    return null;
+  }
+
+  return {
+    season: "2025-26",
+    matchday: current.matchday,
+  };
+}
+
 declare global {
   var sqliteDb: Database.Database | undefined;
 }
@@ -128,6 +196,25 @@ export async function ensurePredictionsTable(): Promise<void> {
 
 export async function getCurrentMatchdayPredictions(): Promise<CurrentMatchdayPredictions | null> {
   await ensurePredictionsTable();
+
+  const hardcodedCurrent = getHardcodedCurrentMatchdayReference(new Date());
+
+  if (hardcodedCurrent) {
+    const hardcodedPredictions = await getMatchdayPredictions(
+      hardcodedCurrent.season,
+      hardcodedCurrent.matchday,
+    );
+
+    if (hardcodedPredictions) {
+      return hardcodedPredictions;
+    }
+
+    return {
+      season: hardcodedCurrent.season,
+      matchday: hardcodedCurrent.matchday,
+      predictions: [],
+    };
+  }
 
   const db = getDb();
 
